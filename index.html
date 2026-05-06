@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa Operativo Comisaría Cordillera - v2</title>
+
+  <!-- Leaflet / OpenStreetMap -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    header {
+      background: #020617;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    header h1 { margin: 0; font-size: 23px; }
+    header p { margin: 4px 0 0; color: #cbd5e1; font-size: 14px; }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .btn { background: #2563eb; color: white; }
+    .btn:hover { background: #1d4ed8; }
+    .btn-secondary { background: #e2e8f0; color: #0f172a; }
+    .btn-danger { background: #dc2626; color: white; width: 100%; margin-top: 10px; }
+    .btn-small { padding: 8px 10px; font-size: 12px; }
+    .layout {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 320px 1fr 340px;
+      gap: 16px;
+    }
+    .card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+      margin-bottom: 16px;
+    }
+    .card h2 { margin: 0 0 12px; font-size: 17px; }
+    label { display: block; margin: 10px 0 4px; font-size: 13px; font-weight: 700; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 9px;
+      font-size: 14px;
+    }
+    textarea { min-height: 76px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .help {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .warning {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .error {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 13px;
+      margin-bottom: 10px;
+      display: none;
+    }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .stat strong { display: block; font-size: 28px; margin-bottom: 4px; }
+    .stat span { color: #64748b; font-size: 12px; }
+    .map-card { padding: 0; overflow: hidden; }
+    .map-title {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: white;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .map-title strong { display: block; }
+    .map-title span { color: #64748b; font-size: 12px; }
+    #mapa {
+      height: 620px;
+      width: 100%;
+      background: #e2e8f0;
+      z-index: 1;
+    }
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 2px 0;
+    }
+    .badge.Baja { background: #d1fae5; color: #047857; border-color: #a7f3d0; }
+    .badge.Media { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .badge.Alta { background: #ffedd5; color: #c2410c; border-color: #fed7aa; }
+    .badge.Crítica { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+    .incident-item {
+      width: 100%;
+      text-align: left;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+    .incident-item:hover { background: #f8fafc; }
+    .incident-item strong { display: block; font-size: 14px; }
+    .incident-item span { color: #64748b; font-size: 12px; }
+    .detail-box {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    .small { font-size: 12px; color: #64748b; }
+    .quick-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .quick-buttons button {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
+      font-size: 12px;
+    }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 12px; }
+    .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+    .leaflet-popup-content { font-size: 13px; }
+    .file-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    @media (max-width: 1150px) {
+      .layout { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      #mapa { height: 520px; }
+      header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Mapa Operativo Comisaría Cordillera</h1>
+      <p>Versión v2 corregida · Villa Pehuenia · Moquehue · Lonco Luan</p>
+    </div>
+    <div class="file-actions">
+      <button class="btn-secondary" onclick="exportarCSV()">Exportar CSV / Excel</button>
+      <button class="btn-secondary" onclick="exportarJSON()">Backup JSON</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section>
+      <div id="errorBox" class="error"></div>
+
+      <div class="card">
+        <h2>Filtros</h2>
+        <label>Zona</label>
+        <select id="filtroZona" onchange="render()">
+          <option>Todas</option>
+          <option>Villa Pehuenia</option>
+          <option>Moquehue</option>
+          <option>Lonco Luan</option>
+          <option>Zona Ruta/Parajes</option>
+        </select>
+
+        <label>Tipo de evento</label>
+        <select id="filtroTipo" onchange="render()">
+          <option>Todos</option>
+          <option>Delito</option>
+          <option>Accidente de tránsito</option>
+          <option>Violencia familiar</option>
+          <option>Disturbio</option>
+          <option>Persona extraviada</option>
+          <option>Animal suelto</option>
+          <option>Incendio</option>
+          <option>Asistencia</option>
+        </select>
+
+        <label>Buscar</label>
+        <input id="busqueda" placeholder="ruta, comercio, móvil..." oninput="render()" />
+
+        <div class="legend">
+          <span><span class="dot" style="background:#10b981"></span>Baja</span>
+          <span><span class="dot" style="background:#facc15"></span>Media</span>
+          <span><span class="dot" style="background:#f97316"></span>Alta</span>
+          <span><span class="dot" style="background:#dc2626"></span>Crítica</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Nuevo incidente</h2>
+        <div class="help">
+          <strong>Paso 1:</strong> hacé clic en el mapa real para marcar el lugar.
+          <br><strong>Paso 2:</strong> completá los datos y guardá.
+        </div>
+
+        <div id="puntoInfo" class="small">Todavía no marcaste un punto.</div>
+
+        <label>Tipo</label>
+        <select id="tipo">
+          <option>Accidente de tránsito</option>
+          <option>Delito</option>
+          <option>Violencia familiar</option>
+          <option>Disturbio</option>
+          <option>Persona extraviada</option>
+          <option>Animal suelto</option>
+          <option>Incendio</option>
+          <option>Asistencia</option>
+        </select>
+
+        <label>Zona</label>
+        <select id="zona">
+          <option>Villa Pehuenia</option>
+          <option>Moquehue</option>
+          <option>Lonco Luan</option>
+          <option>Zona Ruta/Parajes</option>
+        </select>
+
+        <div class="row">
+          <div>
+            <label>Gravedad</label>
+            <select id="gravedad">
+              <option>Baja</option>
+              <option selected>Media</option>
+              <option>Alta</option>
+              <option>Crítica</option>
+            </select>
+          </div>
+          <div>
+            <label>Estado</label>
+            <select id="estado">
+              <option>Pendiente</option>
+              <option>En curso</option>
+              <option>Finalizado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Fecha</label>
+            <input id="fecha" type="date" />
+          </div>
+          <div>
+            <label>Hora</label>
+            <input id="hora" type="time" />
+          </div>
+        </div>
+
+        <label>Referencia / dirección</label>
+        <input id="referencia" placeholder="Ej: RP 13, acceso a Moquehue, curva..." />
+
+        <label>Observaciones</label>
+        <textarea id="descripcion" placeholder="Detalle breve del hecho"></textarea>
+
+        <label>Móvil asignado</label>
+        <input id="movil" value="Sin asignar" />
+
+        <br><br>
+        <button class="btn" style="width:100%" onclick="guardarIncidente()">Guardar incidente</button>
+      </div>
+
+      <div class="card">
+        <h2>Ir rápido a zona</h2>
+        <div class="quick-buttons">
+          <button onclick="irAZona('villa')">Villa Pehuenia</button>
+          <button onclick="irAZona('moquehue')">Moquehue</button>
+          <button onclick="irAZona('lonco')">Lonco Luan</button>
+          <button onclick="irAZona('general')">Vista general</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Administración local</h2>
+        <p class="small">Los datos quedan guardados en esta PC, dentro del navegador. Usá Backup JSON o CSV como respaldo.</p>
+        <button class="btn-danger" onclick="vaciarDatos()">Vaciar datos</button>
+      </div>
+    </section>
+
+    <section>
+      <div class="stats">
+        <div class="stat"><strong id="statTotal">0</strong><span>Eventos</span></div>
+        <div class="stat"><strong id="statAccidentes">0</strong><span>Accidentes</span></div>
+        <div class="stat"><strong id="statCriticos">0</strong><span>Alta / crítica</span></div>
+        <div class="stat"><strong id="statAbiertos">0</strong><span>Abiertos</span></div>
+      </div>
+
+      <div class="card map-card">
+        <div class="map-title">
+          <div>
+            <strong>Mapa real operativo</strong>
+            <span>Si aparece gris/blanco: necesitás internet o desbloquear unpkg.com/openstreetmap.org.</span>
+          </div>
+          <button class="btn-secondary btn-small" onclick="centrarTodos()">Centrar todo</button>
+        </div>
+        <div id="mapa"></div>
+      </div>
+
+      <div class="warning">
+        <strong>Uso recomendado:</strong> abrí este archivo con Chrome y conexión a internet. Los incidentes se guardan aunque cierres el archivo.
+      </div>
+    </section>
+
+    <section>
+      <div class="card">
+        <h2>Detalle</h2>
+        <div id="detalle" class="small">Seleccione un incidente del mapa o del listado.</div>
+      </div>
+
+      <div class="card">
+        <h2>Intervenciones</h2>
+        <div id="lista"></div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const STORAGE_KEY = "mapa_operativo_comisaria_real_v2";
+
+let incidentes = [];
+let puntoPendiente = null;
+let marcadorTemporal = null;
+let seleccionadoId = null;
+let map = null;
+let capaIncidentes = null;
+let capaZonas = null;
+
+const zonasMapa = {
+  villa: { nombre: "Villa Pehuenia", lat: -38.8839, lng: -71.1765, zoom: 14 },
+  moquehue: { nombre: "Moquehue", lat: -38.9335, lng: -71.3300, zoom: 14 },
+  lonco: { nombre: "Lonco Luan", lat: -38.9530, lng: -71.0430, zoom: 13 },
+  general: { nombre: "Vista general", lat: -38.9100, lng: -71.1850, zoom: 11 }
+};
+
+const ejemplos = [
+  {
+    id: 1,
+    tipo: "Accidente de tránsito",
+    zona: "Moquehue",
+    gravedad: "Alta",
+    estado: "En curso",
+    fecha: "2026-05-06",
+    hora: "08:40",
+    referencia: "Acceso a Moquehue",
+    descripcion: "Ejemplo: despiste sobre camino. Reemplazar por datos reales.",
+    movil: "Móvil 12",
+    lat: -38.9335,
+    lng: -71.3300
+  },
+  {
+    id: 2,
+    tipo: "Animal suelto",
+    zona: "Lonco Luan",
+    gravedad: "Media",
+    estado: "Pendiente",
+    fecha: "2026-05-06",
+    hora: "19:15",
+    referencia: "Sector Lonco Luan",
+    descripcion: "Ejemplo: animales próximos a calzada.",
+    movil: "Sin asignar",
+    lat: -38.9530,
+    lng: -71.0430
+  },
+  {
+    id: 3,
+    tipo: "Delito",
+    zona: "Villa Pehuenia",
+    gravedad: "Media",
+    estado: "Finalizado",
+    fecha: "2026-05-05",
+    hora: "23:10",
+    referencia: "Zona urbana Villa Pehuenia",
+    descripcion: "Ejemplo: hecho denunciado en sector urbano.",
+    movil: "Móvil 08",
+    lat: -38.8839,
+    lng: -71.1765
+  }
+];
+
+function mostrarError(msg) {
+  const box = document.getElementById("errorBox");
+  box.style.display = "block";
+  box.innerHTML = "<strong>Error detectado:</strong><br>" + msg;
+}
+
+function hoy() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function horaActual() {
+  return new Date().toTimeString().slice(0, 5);
+}
+
+function cargarDatos() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    incidentes = saved ? JSON.parse(saved) : ejemplos;
+  } catch (e) {
+    incidentes = ejemplos;
+    mostrarError("No se pudieron leer los datos locales. Se cargaron ejemplos.");
+  }
+
+  document.getElementById("fecha").value = hoy();
+  document.getElementById("hora").value = horaActual();
+}
+
+function guardarLocal() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(incidentes));
+  } catch (e) {
+    mostrarError("No se pudo guardar en el navegador. Revisá permisos o espacio disponible.");
+  }
+}
+
+function iniciarMapa() {
+  if (typeof L === "undefined") {
+    mostrarError("No cargó Leaflet. Revisá conexión a internet. El archivo necesita acceder a https://unpkg.com y https://openstreetmap.org para mostrar el mapa.");
+    document.getElementById("mapa").innerHTML = "<div style='padding:20px'>No se pudo cargar el mapa. Conectá internet y reabrí el archivo.</div>";
+    return;
+  }
+
+  map = L.map("mapa", {
+    zoomControl: true
+  }).setView([zonasMapa.general.lat, zonasMapa.general.lng], zonasMapa.general.zoom);
+
+  const tiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors"
+  });
+
+  tiles.on("tileerror", function() {
+    mostrarError("No cargan las imágenes del mapa. Puede ser falta de internet, firewall o bloqueo de OpenStreetMap.");
+  });
+
+  tiles.addTo(map);
+
+  capaIncidentes = L.layerGroup().addTo(map);
+  capaZonas = L.layerGroup().addTo(map);
+
+  agregarZonasReferencia();
+
+  setTimeout(() => {
+    map.invalidateSize();
+    centrarTodos();
+  }, 300);
+
+  map.on("click", function(e) {
+    puntoPendiente = {
+      lat: e.latlng.lat,
+      lng: e.latlng.lng
+    };
+
+    if (marcadorTemporal) {
+      map.removeLayer(marcadorTemporal);
+    }
+
+    marcadorTemporal = L.marker([puntoPendiente.lat, puntoPendiente.lng], {
+      draggable: true
+    }).addTo(map);
+
+    marcadorTemporal.bindPopup("<strong>Nuevo punto marcado</strong><br>Arrastrá el marcador si querés corregir la ubicación.").openPopup();
+
+    marcadorTemporal.on("dragend", function(ev) {
+      const pos = ev.target.getLatLng();
+      puntoPendiente = { lat: pos.lat, lng: pos.lng };
+      actualizarPuntoInfo();
+    });
+
+    seleccionadoId = null;
+    actualizarPuntoInfo();
+    renderDetalle();
+  });
+}
+
+function agregarZonasReferencia() {
+  if (!capaZonas) return;
+  capaZonas.clearLayers();
+
+  [
+    { nombre: "Villa Pehuenia", lat: zonasMapa.villa.lat, lng: zonasMapa.villa.lng },
+    { nombre: "Moquehue", lat: zonasMapa.moquehue.lat, lng: zonasMapa.moquehue.lng },
+    { nombre: "Lonco Luan", lat: zonasMapa.lonco.lat, lng: zonasMapa.lonco.lng }
+  ].forEach(z => {
+    L.circleMarker([z.lat, z.lng], {
+      radius: 8,
+      color: "#1d4ed8",
+      weight: 2,
+      fillColor: "#60a5fa",
+      fillOpacity: 0.45
+    }).bindPopup(`<strong>${z.nombre}</strong><br>Referencia de localidad`).addTo(capaZonas);
+  });
+}
+
+function actualizarPuntoInfo() {
+  if (!puntoPendiente) {
+    document.getElementById("puntoInfo").innerText = "Todavía no marcaste un punto.";
+    return;
+  }
+
+  document.getElementById("puntoInfo").innerText =
+    `Ubicación marcada: Lat ${puntoPendiente.lat.toFixed(6)} / Lng ${puntoPendiente.lng.toFixed(6)}`;
+}
+
+function colorPorGravedad(gravedad) {
+  if (gravedad === "Baja") return "#10b981";
+  if (gravedad === "Media") return "#facc15";
+  if (gravedad === "Alta") return "#f97316";
+  if (gravedad === "Crítica") return "#dc2626";
+  return "#2563eb";
+}
+
+function iconoTipo(tipo) {
+  if (tipo === "Accidente de tránsito") return "🚗";
+  if (tipo === "Delito") return "🛡️";
+  if (tipo === "Animal suelto") return "🐴";
+  if (tipo === "Persona extraviada") return "🔎";
+  if (tipo === "Incendio") return "🔥";
+  if (tipo === "Violencia familiar") return "⚠️";
+  if (tipo === "Disturbio") return "❗";
+  return "●";
+}
+
+function crearIcono(i) {
+  const color = colorPorGravedad(i.gravedad);
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        width:34px;height:34px;border-radius:50%;
+        border:4px solid white;background:${color};
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 3px 10px rgba(0,0,0,.30);
+        font-size:16px;font-weight:900;">
+        ${iconoTipo(i.tipo)}
+      </div>
+    `,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17]
+  });
+}
+
+function getFiltrados() {
+  const filtroZona = document.getElementById("filtroZona").value;
+  const filtroTipo = document.getElementById("filtroTipo").value;
+  const busqueda = document.getElementById("busqueda").value.toLowerCase();
+
+  return incidentes.filter(i => {
+    const okZona = filtroZona === "Todas" || i.zona === filtroZona;
+    const okTipo = filtroTipo === "Todos" || i.tipo === filtroTipo;
+    const texto = `${i.tipo} ${i.zona} ${i.referencia} ${i.descripcion} ${i.movil}`.toLowerCase();
+    return okZona && okTipo && texto.includes(busqueda);
+  });
+}
+
+function guardarIncidente() {
+  if (!puntoPendiente) {
+    alert("Primero hacé clic en el mapa para marcar la ubicación.");
+    return;
+  }
+
+  const nuevo = {
+    id: Date.now(),
+    tipo: document.getElementById("tipo").value,
+    zona: document.getElementById("zona").value,
+    gravedad: document.getElementById("gravedad").value,
+    estado: document.getElementById("estado").value,
+    fecha: document.getElementById("fecha").value,
+    hora: document.getElementById("hora").value,
+    referencia: document.getElementById("referencia").value,
+    descripcion: document.getElementById("descripcion").value,
+    movil: document.getElementById("movil").value,
+    lat: Math.round(puntoPendiente.lat * 1000000) / 1000000,
+    lng: Math.round(puntoPendiente.lng * 1000000) / 1000000
+  };
+
+  incidentes.unshift(nuevo);
+  guardarLocal();
+
+  seleccionadoId = nuevo.id;
+  puntoPendiente = null;
+
+  if (marcadorTemporal && map) {
+    map.removeLayer(marcadorTemporal);
+    marcadorTemporal = null;
+  }
+
+  document.getElementById("referencia").value = "";
+  document.getElementById("descripcion").value = "";
+  document.getElementById("fecha").value = hoy();
+  document.getElementById("hora").value = horaActual();
+  actualizarPuntoInfo();
+
+  render();
+}
+
+function seleccionar(id) {
+  seleccionadoId = id;
+  puntoPendiente = null;
+
+  if (marcadorTemporal && map) {
+    map.removeLayer(marcadorTemporal);
+    marcadorTemporal = null;
+  }
+
+  const i = incidentes.find(x => x.id === id);
+  if (i && map) map.setView([i.lat, i.lng], Math.max(map.getZoom(), 15));
+
+  render();
+}
+
+function borrarIncidente(id) {
+  if (!confirm("¿Seguro que desea borrar este incidente?")) return;
+  incidentes = incidentes.filter(i => i.id !== id);
+  seleccionadoId = null;
+  guardarLocal();
+  render();
+}
+
+function vaciarDatos() {
+  if (!confirm("¿Seguro que desea vaciar todos los datos guardados?")) return;
+  incidentes = [];
+  seleccionadoId = null;
+  puntoPendiente = null;
+
+  if (marcadorTemporal && map) {
+    map.removeLayer(marcadorTemporal);
+    marcadorTemporal = null;
+  }
+
+  guardarLocal();
+  render();
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+function exportarCSV() {
+  const headers = ["id", "fecha", "hora", "tipo", "zona", "gravedad", "estado", "referencia", "descripcion", "movil", "latitud", "longitud"];
+  const rows = incidentes.map(i => [
+    i.id, i.fecha, i.hora, i.tipo, i.zona, i.gravedad, i.estado, i.referencia, i.descripcion, i.movil, i.lat, i.lng
+  ].map(csvEscape).join(","));
+
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `mapa_operativo_comisaria_${hoy()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportarJSON() {
+  const data = {
+    version: "v2",
+    fecha_backup: new Date().toISOString(),
+    incidentes
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `backup_mapa_operativo_comisaria_${hoy()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function renderMapa() {
+  if (!map || !capaIncidentes) return;
+
+  capaIncidentes.clearLayers();
+  const filtrados = getFiltrados();
+
+  filtrados.forEach(i => {
+    if (typeof i.lat !== "number" || typeof i.lng !== "number") return;
+
+    const marker = L.marker([i.lat, i.lng], { icon: crearIcono(i) })
+      .bindPopup(`
+        <strong>${iconoTipo(i.tipo)} ${i.tipo}</strong><br>
+        <b>Zona:</b> ${i.zona}<br>
+        <b>Gravedad:</b> ${i.gravedad}<br>
+        <b>Estado:</b> ${i.estado}<br>
+        <b>Fecha:</b> ${i.fecha} ${i.hora}<br>
+        <b>Referencia:</b> ${i.referencia || "Sin referencia"}<br>
+        <button onclick="seleccionar(${i.id})" style="margin-top:6px;padding:6px;border-radius:6px;border:0;background:#2563eb;color:white;cursor:pointer;">Ver detalle</button>
+      `)
+      .addTo(capaIncidentes);
+  });
+}
+
+function renderStats() {
+  const filtrados = getFiltrados();
+  document.getElementById("statTotal").innerText = filtrados.length;
+  document.getElementById("statAccidentes").innerText = filtrados.filter(i => i.tipo === "Accidente de tránsito").length;
+  document.getElementById("statCriticos").innerText = filtrados.filter(i => i.gravedad === "Alta" || i.gravedad === "Crítica").length;
+  document.getElementById("statAbiertos").innerText = filtrados.filter(i => i.estado !== "Finalizado").length;
+}
+
+function renderLista() {
+  const filtrados = getFiltrados();
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  if (filtrados.length === 0) {
+    lista.innerHTML = '<p class="small">No hay intervenciones con esos filtros.</p>';
+    return;
+  }
+
+  filtrados.forEach(i => {
+    const b = document.createElement("button");
+    b.className = "incident-item";
+    b.onclick = () => seleccionar(i.id);
+    b.innerHTML = `
+      <strong>${iconoTipo(i.tipo)} ${i.tipo}</strong>
+      <span>${i.zona} · ${i.fecha} ${i.hora}</span>
+      <div>${i.referencia || "Sin referencia"}</div>
+      <span>Lat ${Number(i.lat).toFixed(5)} / Lng ${Number(i.lng).toFixed(5)}</span>
+    `;
+    lista.appendChild(b);
+  });
+}
+
+function renderDetalle() {
+  const detalle = document.getElementById("detalle");
+  const sel = incidentes.find(i => i.id === seleccionadoId);
+
+  if (!sel) {
+    detalle.innerHTML = '<span class="small">Seleccione un incidente del mapa o del listado.</span>';
+    return;
+  }
+
+  detalle.innerHTML = `
+    <h3 style="margin:0 0 8px">${iconoTipo(sel.tipo)} ${sel.tipo}</h3>
+    <span class="badge ${sel.gravedad}">${sel.gravedad}</span>
+    <p><strong>Fecha:</strong> ${sel.fecha} · ${sel.hora}</p>
+    <p><strong>Zona:</strong> ${sel.zona}</p>
+    <p><strong>Estado:</strong> ${sel.estado}</p>
+    <p><strong>Móvil:</strong> ${sel.movil || "Sin asignar"}</p>
+    <p><strong>Referencia:</strong> ${sel.referencia || "Sin referencia"}</p>
+    <p><strong>Coordenadas:</strong><br>Lat ${Number(sel.lat).toFixed(6)}<br>Lng ${Number(sel.lng).toFixed(6)}</p>
+    <div class="detail-box">${sel.descripcion || "Sin observaciones."}</div>
+    <button class="btn-danger" onclick="borrarIncidente(${sel.id})">Borrar incidente</button>
+  `;
+}
+
+function render() {
+  renderMapa();
+  renderStats();
+  renderLista();
+  renderDetalle();
+}
+
+function irAZona(zona) {
+  if (!map) return;
+  const z = zonasMapa[zona];
+  map.setView([z.lat, z.lng], z.zoom);
+  setTimeout(() => map.invalidateSize(), 100);
+}
+
+function centrarTodos() {
+  if (!map) return;
+
+  const bounds = L.latLngBounds([
+    [zonasMapa.villa.lat, zonasMapa.villa.lng],
+    [zonasMapa.moquehue.lat, zonasMapa.moquehue.lng],
+    [zonasMapa.lonco.lat, zonasMapa.lonco.lng]
+  ]);
+
+  incidentes.forEach(i => {
+    if (typeof i.lat === "number" && typeof i.lng === "number") {
+      bounds.extend([i.lat, i.lng]);
+    }
+  });
+
+  map.fitBounds(bounds.pad(0.25));
+  setTimeout(() => map.invalidateSize(), 100);
+}
+
+window.addEventListener("load", function() {
+  cargarDatos();
+  iniciarMapa();
+  render();
+});
+</script>
+</body>
+</html>
