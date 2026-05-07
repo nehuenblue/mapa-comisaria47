@@ -1,0 +1,27 @@
+// Storage Rules — Comisaría N° 47 (Fase 3)
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() { return request.auth != null; }
+    function isImage() {
+      return request.resource != null
+        && request.resource.contentType != null
+        && request.resource.contentType.matches('image/.*');
+    }
+    function maxSize8MB() {
+      return request.resource != null
+        && request.resource.size < 8 * 1024 * 1024;
+    }
+
+    match /fotos_personas/{filename} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isImage() && maxSize8MB();
+      allow delete: if isSignedIn();
+    }
+
+    match /backups/{filename} {
+      allow read, write: if false;
+    }
+  }
+}
