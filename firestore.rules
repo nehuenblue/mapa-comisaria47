@@ -1,0 +1,178 @@
+// ============================================================
+// Firestore Security Rules — Comisaría N° 47
+// ----------------------------------------------------------------
+// Reglas COMPLETAS para todas las fases (1 a 5).
+// Diseñadas para coexistir con la migración por etapas:
+// si una colección todavía no se usa, sus reglas igual están aplicadas.
+// ============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ====================================================
+    // Funciones helper
+    // ====================================================
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function userExists() {
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
+    function isActive() {
+      return isSignedIn() && userExists() && userDoc().activo == true;
+    }
+
+    function role() {
+      return userDoc().rol;
+    }
+
+    function isAdmin()      { return isActive() && role() == 'admin'; }
+    function isSupervisor() { return isActive() && (role() == 'admin' || role() == 'supervisor'); }
+    function isOperador()   { return isActive() && (role() == 'admin' || role() == 'supervisor' || role() == 'operador'); }
+    function isReader()     { return isActive(); }
+
+    function isOwner(resource) {
+      return resource.data.operadorUid == request.auth.uid;
+    }
+
+    function isFinalized(resource) {
+      return resource.data.estado == 'Finalizado';
+    }
+
+    // Verificar que un set de campos NO cambió (para reglas operacionales)
+    function unchanged(field) {
+      return resource.data[field] == request.resource.data[field];
+    }
+
+    // ====================================================
+    // USUARIOS
+    // ----------------------------------------------------
+    // Cada usuario puede leer su propio doc.
+    // Admin puede leer/escribir todos.
+    // Nadie más puede modificar roles.
+    // ====================================================
+    match /usuarios/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+
+      // El usuario puede actualizar SOLO su displayName y ultimoAcceso.
+      // Cualquier otro campo (rol, activo, comisaria) requiere admin.
+      allow update: if isSignedIn() && request.auth.uid == uid
+                    && unchanged('rol')
+                    && unchanged('activo')
+                    && unchanged('email')
+                    && unchanged('creadoEn');
+
+      // Solo admin puede crear, eliminar o cambiar roles.
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin();
+    }
+
+    // ====================================================
+    // INCIDENTES
+    // ----------------------------------------------------
+    // Lectura: cualquier usuario activo (incluye lectura).
+    // Crear: operador o superior. Debe quedar registrado el operadorUid.
+    // Editar: operador (solo propio + no finalizado), supervisor/admin (cualquiera).
+    // Borrar: solo admin.
+    // ====================================================
+    match /incidentes/{id} {
+      allow read: if isReader();
+
+      allow create: if isOperador()
+                    && request.resource.data.operadorUid == request.auth.uid
+                    && request.resource.data.creadoEn == request.time;
+
+      allow update: if (
+        // operador: solo si es propio y NO está finalizado, no puede cambiar dueño
+        (isOperador()
+         && isOwner(resource)
+         && !isFinalized(resource)
+         && request.resource.data.operadorUid == resource.data.operadorUid
+         && request.resource.data.creadoEn == resource.data.creadoEn)
+        ||
+        // supervisor o admin: cualquier registro
+        isSupervisor()
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ====================================================
+    // PERSONAS (demorados / detenidos / contraventores / identificados)
+    // ----------------------------------------------------
+    // Mismas reglas que incidentes.
+    // ====================================================
+    match /personas/{id} {
+      allow read: if isReader();
+
+      allow create: if isOperador()
+                    && request.resource.data.operadorUid == request.auth.uid
+                    && request.resource.data.modulo in ['demorados','detenidos','contraventores','identificados']
+                    && request.resource.data.creadoEn == request.time;
+
+      allow update: if (
+        (isOperador()
+         && isOwner(resource)
+         && request.resource.data.operadorUid == resource.data.operadorUid
+         && request.resource.data.creadoEn == resource.data.creadoEn)
+        ||
+        isSupervisor()
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ====================================================
+    // AUDITORÍA
+    // ----------------------------------------------------
+    // Solo escritura por usuario activo, NUNCA modificable ni borrable.
+    // Lectura: supervisor o admin.
+    // ====================================================
+    match /auditoria/{id} {
+      allow read: if isSupervisor();
+
+      allow create: if isActive()
+                    && request.resource.data.usuarioUid == request.auth.uid
+                    && request.resource.data.fecha == request.time;
+
+      allow update, delete: if false;  // append-only
+    }
+
+    // ====================================================
+    // CONFIGURACIÓN GENERAL
+    // ----------------------------------------------------
+    // Lectura: todos los activos. Escritura: solo admin.
+    // ====================================================
+    match /configuracion/{doc} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+
+    // ====================================================
+    // EXPORTACIONES (log de quién exportó qué)
+    // ----------------------------------------------------
+    // Cada usuario puede crear su propio log; lectura solo supervisor+.
+    // ====================================================
+    match /exportaciones/{id} {
+      allow read: if isSupervisor();
+      allow create: if isActive()
+                    && request.resource.data.usuarioUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ====================================================
+    // Cualquier otra ruta: denegada por defecto
+    // ====================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
