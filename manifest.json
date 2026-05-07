@@ -1,0 +1,52 @@
+{
+  "name": "Mapa del Delito - Comisaría N° 47",
+  "short_name": "Comisaría 47",
+  "description": "Centro de monitoreo policial - Mapa del Delito, fichaje de personas y análisis táctico (Villa Pehuenia · Moquehue · Lonco Luan)",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#03070f",
+  "theme_color": "#0ea5e9",
+  "lang": "es-AR",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities", "government", "security"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cargar incidente",
+      "short_name": "Incidente",
+      "description": "Vista de operaciones para registrar un nuevo incidente",
+      "url": "./index.html?vista=operaciones",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Cargar persona",
+      "short_name": "Persona",
+      "description": "Ficha de demorados, detenidos, contraventores o identificados",
+      "url": "./index.html?vista=personas",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

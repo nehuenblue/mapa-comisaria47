@@ -1265,17 +1265,145 @@
       .dist-label { font-size: 11px; }
     }
 
+  
+
+    /* ===== ETAPA 4 — PWA / Online-Offline / Install ===== */
+    .topbar .pill.offline {
+      background: rgba(220,38,38,.18);
+      border-color: rgba(220,38,38,.45);
+      color: #fca5a5;
+    }
+    .topbar .pill.offline .dot-live {
+      background: #dc2626;
+      box-shadow: 0 0 9px #dc2626;
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    .btn-install {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 11px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      background: linear-gradient(135deg, rgba(14,165,233,.30), rgba(37,99,235,.18));
+      border: 1px solid rgba(34,211,238,.55);
+      color: #fff;
+      box-shadow: 0 0 0 1px rgba(34,211,238,.18), 0 4px 12px rgba(14,165,233,.20);
+      font-family: "SF Mono", ui-monospace, Consolas, monospace;
+      transition: all .15s ease;
+    }
+    .btn-install:hover {
+      background: linear-gradient(135deg, rgba(14,165,233,.45), rgba(37,99,235,.28));
+      transform: translateY(-1px);
+    }
+
+    /* Toast (offline notification) */
+    .pwa-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      z-index: 9999;
+      max-width: calc(100% - 24px);
+      padding: 12px 18px;
+      background: linear-gradient(135deg, rgba(8,18,34,.97), rgba(15,23,42,.97));
+      color: #fff;
+      border: 1px solid rgba(34,211,238,.35);
+      border-radius: 14px;
+      box-shadow: 0 18px 48px rgba(0,0,0,.55), 0 0 0 1px rgba(34,211,238,.18);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      transition: transform .35s cubic-bezier(.2,.7,.2,1), opacity .35s;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .pwa-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+    .pwa-toast.danger { border-color: rgba(220,38,38,.5); }
+    .pwa-toast.success { border-color: rgba(16,185,129,.5); }
+    .pwa-toast.info { border-color: rgba(34,211,238,.5); }
+
+    /* Cache progress */
+    .cache-progress {
+      width: 100%;
+      height: 8px;
+      background: rgba(2,6,23,.6);
+      border: 1px solid rgba(34,211,238,.18);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 8px 0 4px;
+      display: none;
+    }
+    .cache-progress.active { display: block; }
+    .cache-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #0ea5e9, #22d3ee);
+      box-shadow: 0 0 10px rgba(34,211,238,.5);
+      transition: width .3s ease;
+    }
+
+    .cache-status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+    .cache-stat {
+      padding: 9px 11px;
+      background: rgba(2,6,23,.55);
+      border: 1px solid rgba(34,211,238,.16);
+      border-radius: 10px;
+    }
+    .cache-stat .cs-lab {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .cache-stat .cs-val {
+      display: block;
+      color: #67e8f9;
+      font-size: 16px;
+      font-weight: 800;
+      font-family: "SF Mono", ui-monospace, Consolas, monospace;
+      letter-spacing: .02em;
+    }
+
   </style>
+
+  <!-- ===== Etapa 4: PWA META ===== -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0ea5e9">
+  <meta name="color-scheme" content="dark">
+  <meta name="application-name" content="Comisaría 47">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Comisaría 47">
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon-180.png">
 </head>
 <body>
 
   <div class="topbar" role="status" aria-label="Estado del sistema">
     <div class="topbar-left">
-      <span class="pill"><span class="dot-live"></span>Sistema operativo</span>
+      <span class="pill" id="onlinePill"><span class="dot-live" id="onlineDot"></span><span id="onlineText">ONLINE</span></span>
       <span class="sep">|</span>
       <span>Comisaría N° 47</span>
       <span class="sep">|</span>
       <span>Zona Cordillera</span>
+      <button class="btn-install" id="btnInstall" onclick="instalarPWA()" style="display:none">📲 Instalar</button>
     </div>
     <div class="topbar-right">
       <span id="topbarRecords">REG: 0</span>
@@ -1476,6 +1604,34 @@
         <h2>Administración local <span class="h2-tag">ADMIN</span></h2>
         <p class="small">Los datos quedan guardados en este navegador. Exportá Excel o JSON como respaldo.</p>
         <button class="btn-danger" onclick="vaciarDatos()">Vaciar incidentes</button>
+      </div>
+
+      <div class="card">
+        <h2>Cache offline <span class="h2-tag" id="swStatusTag">SW</span></h2>
+        <p class="small" id="swStatusText" style="margin-bottom:8px">Verificando estado del Service Worker…</p>
+
+        <div class="cache-status-grid">
+          <div class="cache-stat">
+            <span class="cs-lab">Tiles cacheados</span>
+            <span class="cs-val" id="cacheTilesCount">—</span>
+          </div>
+          <div class="cache-stat">
+            <span class="cs-lab">Uso estimado</span>
+            <span class="cs-val" id="cacheUsage">—</span>
+          </div>
+        </div>
+
+        <button class="btn" style="width:100%" onclick="precargarZonas()">
+          ⤓ Pre-cargar zonas (Villa · Moquehue · Lonco)
+        </button>
+
+        <div class="cache-progress" id="cacheProgress">
+          <div class="cache-progress-bar" id="cacheProgressBar"></div>
+        </div>
+        <p class="small" id="cacheProgressText" style="margin-top:4px"></p>
+
+        <button class="btn-secondary" style="width:100%; margin-top:8px" onclick="actualizarInfoCache()">↻ Actualizar info</button>
+        <button class="btn-danger" onclick="limpiarCacheTiles()">🗑️ Vaciar cache de mapas</button>
       </div>
     </section>
 
@@ -1757,7 +1913,7 @@
   </main>
 
   <div class="system-footer">
-    <div class="sys-block"><span class="sys-dot"></span> Sistema v3.2 · operativo</div>
+    <div class="sys-block"><span class="sys-dot"></span> Sistema v4.0 PWA · operativo</div>
     <div class="sys-block">Almacenamiento: navegador local + IndexedDB</div>
     <div class="sys-block" id="sysFooterCount">Registros: 0</div>
     <div class="sys-block">Comisaría N° 47 · Neuquén</div>
@@ -3086,6 +3242,229 @@ window.addEventListener("load", async function() {
 
   actualizarContadoresSistema();
 });
+
+
+/* ============================================================
+   ETAPA 4 — PWA / Service Worker / Online-Offline / Install
+   ============================================================ */
+let deferredInstallPrompt = null;
+let swReg = null;
+
+function pwaToast(msg, kind = "info", ms = 3500) {
+  let toast = document.getElementById("pwaToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "pwaToast";
+    toast.className = "pwa-toast";
+    document.body.appendChild(toast);
+  }
+  toast.className = "pwa-toast " + kind;
+  toast.innerText = msg;
+  // forzar reflow para que la transición arranque
+  void toast.offsetWidth;
+  toast.classList.add("show");
+  clearTimeout(pwaToast._t);
+  pwaToast._t = setTimeout(() => toast.classList.remove("show"), ms);
+}
+
+function actualizarOnlineStatus() {
+  const online = navigator.onLine;
+  const pill = document.getElementById("onlinePill");
+  const txt = document.getElementById("onlineText");
+  if (pill) pill.classList.toggle("offline", !online);
+  if (txt) txt.innerText = online ? "ONLINE" : "OFFLINE";
+}
+window.addEventListener("online", () => {
+  actualizarOnlineStatus();
+  pwaToast("Conexión restablecida — los mapas vuelven a actualizarse.", "success");
+});
+window.addEventListener("offline", () => {
+  actualizarOnlineStatus();
+  pwaToast("Sin conexión — el sistema sigue operativo en modo offline.", "danger", 5000);
+});
+
+/* === Service Worker === */
+async function registrarServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    document.getElementById("swStatusText").innerText = "Este navegador no soporta Service Workers.";
+    document.getElementById("swStatusTag").innerText = "N/D";
+    return;
+  }
+  try {
+    swReg = await navigator.serviceWorker.register("./service-worker.js", { scope: "./" });
+    document.getElementById("swStatusTag").innerText = "OK";
+    document.getElementById("swStatusText").innerText = "Service Worker activo · funcionamiento offline disponible.";
+
+    swReg.addEventListener("updatefound", () => {
+      const sw = swReg.installing;
+      if (!sw) return;
+      sw.addEventListener("statechange", () => {
+        if (sw.state === "installed" && navigator.serviceWorker.controller) {
+          pwaToast("Hay una nueva versión instalada. Recargá para aplicarla.", "info", 6000);
+        }
+      });
+    });
+
+    // Mensajes desde el SW
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      const d = event.data || {};
+      if (d.type === "PRECACHE_PROGRESS") {
+        const pct = d.total > 0 ? Math.round(d.done * 100 / d.total) : 0;
+        document.getElementById("cacheProgressBar").style.width = pct + "%";
+        document.getElementById("cacheProgressText").innerText = `Descargando ${d.done}/${d.total} (${d.ok} OK · ${d.fail} fallidos)`;
+      } else if (d.type === "PRECACHE_DONE") {
+        document.getElementById("cacheProgress").classList.remove("active");
+        document.getElementById("cacheProgressText").innerText = `Listo · ${d.ok}/${d.total} tiles cacheados.`;
+        pwaToast(`Pre-carga finalizada: ${d.ok}/${d.total} tiles offline.`, "success", 4500);
+        actualizarInfoCache();
+      } else if (d.type === "TILES_CLEARED") {
+        pwaToast("Cache de mapas vaciado.", "info");
+        actualizarInfoCache();
+      } else if (d.type === "CACHE_INFO") {
+        const tiles = (d.caches && Object.entries(d.caches).find(([k]) => k.includes("tiles"))) || ["", 0];
+        document.getElementById("cacheTilesCount").innerText = tiles[1] || 0;
+        if (typeof d.usage === "number") {
+          const mb = (d.usage / (1024 * 1024)).toFixed(1);
+          document.getElementById("cacheUsage").innerText = mb + " MB";
+        } else {
+          document.getElementById("cacheUsage").innerText = "—";
+        }
+      }
+    });
+
+    // pedir info inicial
+    setTimeout(actualizarInfoCache, 600);
+  } catch (e) {
+    document.getElementById("swStatusText").innerText = "No se pudo registrar el Service Worker: " + e.message;
+    document.getElementById("swStatusTag").innerText = "ERR";
+  }
+}
+
+function actualizarInfoCache() {
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+  navigator.serviceWorker.controller.postMessage({ type: "GET_CACHE_INFO" });
+}
+
+function limpiarCacheTiles() {
+  if (!confirm("¿Vaciar el cache de mapas? Las zonas pre-cargadas dejarán de estar disponibles offline.")) return;
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
+    pwaToast("Service Worker no activo aún.", "danger");
+    return;
+  }
+  navigator.serviceWorker.controller.postMessage({ type: "CLEAR_TILES" });
+}
+
+/* === Cálculo de tiles para zonas prioritarias === */
+function lonLatToTile(lon, lat, z) {
+  const x = Math.floor((lon + 180) / 360 * Math.pow(2, z));
+  const latRad = lat * Math.PI / 180;
+  const y = Math.floor(
+    (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2
+    * Math.pow(2, z)
+  );
+  return { x, y, z };
+}
+
+function tilesParaPrecarga() {
+  const zonas = [
+    { lat: -38.8839, lng: -71.1765 }, // Villa Pehuenia
+    { lat: -38.9335, lng: -71.3300 }, // Moquehue
+    { lat: -38.9530, lng: -71.0430 }  // Lonco Luan
+  ];
+  const niveles = [
+    { z: 10, r: 0 },
+    { z: 11, r: 1 },
+    { z: 12, r: 1 },
+    { z: 13, r: 2 },
+    { z: 14, r: 2 },
+    { z: 15, r: 2 }
+  ];
+  const set = new Set();
+  zonas.forEach(zona => {
+    niveles.forEach(({ z, r }) => {
+      const c = lonLatToTile(zona.lng, zona.lat, z);
+      const max = Math.pow(2, z);
+      for (let dx = -r; dx <= r; dx++) {
+        for (let dy = -r; dy <= r; dy++) {
+          let x = c.x + dx, y = c.y + dy;
+          if (x < 0 || y < 0 || x >= max || y >= max) continue;
+          set.add(`${z}/${x}/${y}`);
+        }
+      }
+    });
+  });
+  return Array.from(set).map(s => {
+    const [z, x, y] = s.split("/").map(Number);
+    return { z, x, y };
+  });
+}
+
+function precargarZonas() {
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
+    pwaToast("Service Worker no activo aún. Esperá unos segundos y reintentá.", "danger", 4500);
+    return;
+  }
+  if (!navigator.onLine) {
+    pwaToast("Sin internet — no se pueden descargar tiles ahora.", "danger", 4500);
+    return;
+  }
+  const tiles = tilesParaPrecarga();
+  document.getElementById("cacheProgress").classList.add("active");
+  document.getElementById("cacheProgressBar").style.width = "0%";
+  document.getElementById("cacheProgressText").innerText = `Iniciando descarga de ${tiles.length} tiles…`;
+  navigator.serviceWorker.controller.postMessage({ type: "PRECACHE_TILES", tiles });
+}
+
+/* === Install prompt === */
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById("btnInstall");
+  if (btn) btn.style.display = "inline-flex";
+});
+
+async function instalarPWA() {
+  if (!deferredInstallPrompt) {
+    pwaToast("La instalación ya se realizó o no está disponible en este navegador.", "info", 4500);
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  try {
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === "accepted") {
+      pwaToast("Aplicación instalada correctamente.", "success");
+    }
+  } catch (e) {}
+  deferredInstallPrompt = null;
+  const btn = document.getElementById("btnInstall");
+  if (btn) btn.style.display = "none";
+}
+
+window.addEventListener("appinstalled", () => {
+  pwaToast("Aplicación agregada a tu dispositivo.", "success");
+  const btn = document.getElementById("btnInstall");
+  if (btn) btn.style.display = "none";
+});
+
+/* === Init PWA === */
+window.addEventListener("DOMContentLoaded", () => {
+  actualizarOnlineStatus();
+  // registrar SW después de pintar para no bloquear el render
+  setTimeout(registrarServiceWorker, 800);
+});
+
+/* === Restaurar vista desde query param (atajos PWA) === */
+(function applyShortcutVista() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("vista");
+    if (v === "operaciones" || v === "personas") {
+      // sobrescribir lo guardado en localStorage
+      try { localStorage.setItem("vista_activa", v); } catch(e) {}
+    }
+  } catch (e) {}
+})();
+
 </script>
 </body>
 </html>
