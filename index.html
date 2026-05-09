@@ -3325,6 +3325,9 @@
       <button class="btn-secondary" data-vista="operaciones" onclick="abrirReportePeriodo()" id="btnReportePeriodo">📅 Reportes por período</button>
       <button class="btn-secondary" onclick="exportarPersonasMesActual()" data-vista="personas" style="display:none">📊 Excel mes actual</button>
       <button class="btn-secondary" onclick="exportarPersonasTodos()" data-vista="personas" style="display:none">📊 Excel completo</button>
+      <!-- v8.5.5: PDFs de personas -->
+      <button class="btn-secondary" onclick="exportarPersonasPDFMesActual()" data-vista="personas" style="display:none;border-color:rgba(244,114,182,.5);color:#fbcfe8">📄 PDF mes actual</button>
+      <button class="btn-secondary" onclick="exportarPersonasPDFTodos()" data-vista="personas" style="display:none;border-color:rgba(244,114,182,.5);color:#fbcfe8">📄 PDF completo</button>
     </div>
   </header>
 
@@ -3776,17 +3779,18 @@
             <input type="file" id="fotoInput" accept="image/*" />
             <input type="file" id="fotoInputCam" accept="image/*" capture="user" />
 
-            <!-- v8.5.3: Solo foto del DNI (escaneo eliminado) -->
+            <!-- v8.5.5: Múltiples fotos de documentos (DNI, etc) -->
             <div style="margin:14px 0 8px;padding:10px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.35);border-radius:8px">
-              <div style="font-size:11px;color:#86efac;font-weight:700;letter-spacing:.08em;margin-bottom:6px">📸 FOTO DEL DNI</div>
-              <p class="small" style="margin:0 0 8px;color:#a7f3d0">Adjuntá una foto del DNI para guardarla con la ficha como evidencia.</p>
-              <button type="button" class="btn-secondary" style="width:100%;border-color:rgba(34,197,94,.5);color:#86efac" onclick="document.getElementById('dniFotoInputPersona').click()">📸 Tomar / Elegir foto del DNI</button>
-              <input type="file" id="dniFotoInputPersona" accept="image/*" capture="environment" style="display:none" onchange="guardarFotoDNI('persona', this)" />
-              <div id="dniFotoPreviewPersona" style="display:none;margin-top:8px">
-                <p class="small" style="color:#86efac;margin:0 0 4px">✅ Foto del DNI guardada</p>
-                <img id="dniFotoImgPersona" style="max-width:100%;border-radius:6px;border:1px solid rgba(34,197,94,.3)">
-                <button type="button" class="btn-secondary" style="width:100%;margin-top:6px;font-size:11px" onclick="quitarFotoDNI('persona')">✕ Quitar foto del DNI</button>
+              <div style="font-size:11px;color:#86efac;font-weight:700;letter-spacing:.08em;margin-bottom:6px">📸 FOTOS DEL DNI Y DOCUMENTOS</div>
+              <p class="small" style="margin:0 0 8px;color:#a7f3d0">Subí <strong>frente, dorso del DNI</strong> y otra documentación. Podés agregar varias fotos.</p>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button type="button" class="btn-secondary" style="flex:1;min-width:130px;border-color:rgba(34,197,94,.5);color:#86efac" onclick="document.getElementById('dniFotoCamPersona').click()">📷 Sacar foto (cámara)</button>
+                <button type="button" class="btn-secondary" style="flex:1;min-width:130px" onclick="document.getElementById('dniFotoArchPersona').click()">📁 Subir desde galería</button>
               </div>
+              <input type="file" id="dniFotoCamPersona" accept="image/*" capture="environment" multiple style="display:none" onchange="guardarFotoDNI('persona', this)" />
+              <input type="file" id="dniFotoArchPersona" accept="image/*" multiple style="display:none" onchange="guardarFotoDNI('persona', this)" />
+              <p class="small" style="margin:6px 0 0;color:#94a3b8;font-size:11px">💡 Si sacás de noche, el celular activa el flash automáticamente con la cámara.</p>
+              <div id="dniFotoPreviewPersona" style="display:none;margin-top:10px"></div>
             </div>
 
             <label>Apellido y nombre</label>
@@ -3814,10 +3818,13 @@
                 <input id="pNacimiento" type="date" />
               </div>
               <div>
-                <label>Documento / DNI</label>
-                <input id="pDni" placeholder="DNI / DU / pasaporte" />
+                <label>Edad <span style="color:#94a3b8;font-size:10px">(manual o se calcula sola)</span></label>
+                <input id="pEdad" type="number" min="0" max="130" placeholder="Edad" />
               </div>
             </div>
+
+            <label>Documento / DNI</label>
+            <input id="pDni" placeholder="DNI / DU / pasaporte" />
 
             <label>Lugar de nacimiento</label>
             <input id="pLugarNac" placeholder="Localidad / provincia" />
@@ -3882,15 +3889,6 @@
 
             <div id="listaPersonas" style="margin-top:12px"></div>
           </div>
-
-          <div class="card">
-            <h2>💡 Buenas prácticas <span class="h2-tag">TIP</span></h2>
-            <div class="help" style="margin:0;line-height:1.6">
-              📸 <strong>Las fotos quedan guardadas en la nube</strong> y son accesibles desde cualquier PC o celular del personal autorizado.<br><br>
-              🔄 <strong>Sincronización automática:</strong> cuando cargás una persona acá, todos los demás operadores la ven al instante.<br><br>
-              💾 <strong>Recomendación:</strong> exportá un Excel a fin de cada mes como respaldo físico para el archivo de la comisaría.
-            </div>
-          </div>
         </section>
 
         <!-- COLUMNA 3: DETALLE -->
@@ -3912,7 +3910,7 @@
 
   <div class="system-footer">
     <div class="sys-block sys-institutional">COMISARÍA N° 47 · VILLA PEHUENIA · NEUQUÉN</div>
-    <div class="sys-block sys-version"><span class="sys-dot"></span> v8.5.4 · Sistema operativo</div>
+    <div class="sys-block sys-version"><span class="sys-dot"></span> v8.5.5 · Sistema operativo</div>
   </div>
 
 <script>
@@ -4221,7 +4219,7 @@ let _zxingReader = null;
 let _scannerStream = null;
 let _scannerActivo = false;
 let _scannerContextoActual = null; // 'persona' | 'denuncia' | 'exposicion'
-const _fotosDNI = { persona: null, denuncia: null, exposicion: null };
+const _fotosDNI = { persona: [], denuncia: [], exposicion: [] };
 
 async function _cargarLectorDNI() {
   if (window.ZXingBrowser && _zxingReader) return _zxingReader;
@@ -4635,41 +4633,87 @@ async function escanearDesdeArchivo(input) {
 }
 window.escanearDesdeArchivo = escanearDesdeArchivo;
 
-// === Foto del DNI (separada del escaneo) ===
+// === Fotos de documentos (DNI, etc.) - múltiples permitidas ===
 async function guardarFotoDNI(contexto, inputEl) {
-  if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
-  const archivo = inputEl.files[0];
-  // Comprimir a base64 (max 800px lado mayor, JPEG 75%)
-  try {
-    const dataUrl = await _comprimirImagenDNI(archivo);
-    _fotosDNI[contexto] = dataUrl;
-    const img = document.getElementById(`dniFotoImg${contexto.charAt(0).toUpperCase() + contexto.slice(1)}`);
-    const prev = document.getElementById(`dniFotoPreview${contexto.charAt(0).toUpperCase() + contexto.slice(1)}`);
-    if (img) img.src = dataUrl;
-    if (prev) prev.style.display = "block";
-    if (typeof mostrarToast === "function") {
-      mostrarToast({
-        titulo: "Foto del DNI guardada",
-        mensaje: "Se va a adjuntar a la ficha al guardar.",
-        tipo: "success",
-        icono: "📸",
-        duracion: 2500
-      });
+  if (!inputEl || !inputEl.files || inputEl.files.length === 0) return;
+  const archivos = Array.from(inputEl.files);
+
+  if (!Array.isArray(_fotosDNI[contexto])) _fotosDNI[contexto] = [];
+
+  let agregadas = 0;
+  for (const archivo of archivos) {
+    try {
+      const dataUrl = await _comprimirImagenDNI(archivo);
+      _fotosDNI[contexto].push(dataUrl);
+      agregadas++;
+    } catch(e) {
+      console.error("Error procesando foto:", e);
     }
-  } catch(e) {
-    console.error(e);
-    alert("No se pudo procesar la foto. Probá con otra imagen.");
+  }
+
+  _renderPreviewsFotosDNI(contexto);
+
+  if (typeof mostrarToast === "function" && agregadas > 0) {
+    mostrarToast({
+      titulo: agregadas === 1 ? "Foto agregada" : `${agregadas} fotos agregadas`,
+      mensaje: `Total: ${_fotosDNI[contexto].length} foto${_fotosDNI[contexto].length !== 1 ? "s" : ""} de documentos.`,
+      tipo: "success",
+      icono: "📸",
+      duracion: 2500
+    });
   }
   // Limpiar el input
   inputEl.value = "";
 }
 
-function quitarFotoDNI(contexto) {
-  _fotosDNI[contexto] = null;
-  const img = document.getElementById(`dniFotoImg${contexto.charAt(0).toUpperCase() + contexto.slice(1)}`);
-  const prev = document.getElementById(`dniFotoPreview${contexto.charAt(0).toUpperCase() + contexto.slice(1)}`);
-  if (img) img.src = "";
-  if (prev) prev.style.display = "none";
+function quitarFotoDNI(contexto, indice) {
+  if (!Array.isArray(_fotosDNI[contexto])) {
+    _fotosDNI[contexto] = [];
+    return;
+  }
+  if (typeof indice === "number") {
+    _fotosDNI[contexto].splice(indice, 1);
+  } else {
+    // Sin índice: quitar todas (compatibilidad)
+    _fotosDNI[contexto] = [];
+  }
+  _renderPreviewsFotosDNI(contexto);
+}
+
+function _renderPreviewsFotosDNI(contexto) {
+  const cap = contexto.charAt(0).toUpperCase() + contexto.slice(1);
+  const prev = document.getElementById(`dniFotoPreview${cap}`);
+  if (!prev) return;
+  const fotos = _fotosDNI[contexto] || [];
+  if (fotos.length === 0) {
+    prev.style.display = "none";
+    prev.innerHTML = "";
+    return;
+  }
+  prev.style.display = "block";
+  prev.innerHTML = `
+    <p class="small" style="color:#86efac;margin:0 0 6px;font-weight:700">✅ ${fotos.length} foto${fotos.length !== 1 ? "s" : ""} de documentos guardada${fotos.length !== 1 ? "s" : ""}</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
+      ${fotos.map((f, i) => `
+        <div style="position:relative;border:1px solid rgba(34,197,94,.3);border-radius:6px;overflow:hidden;background:#000">
+          <img src="${f}" style="width:100%;height:100px;object-fit:cover;display:block" onclick="_verFotoGrande('${contexto}', ${i})" />
+          <button type="button" onclick="quitarFotoDNI('${contexto}', ${i})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,.95);color:#fff;border:0;width:24px;height:24px;border-radius:50%;cursor:pointer;font-weight:bold;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center" title="Quitar esta foto">✕</button>
+          <span style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.75);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px">#${i + 1}</span>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function _verFotoGrande(contexto, indice) {
+  const fotos = _fotosDNI[contexto] || [];
+  const f = fotos[indice];
+  if (!f) return;
+  if (typeof abrirLightbox === "function") {
+    abrirLightbox(f);
+  } else {
+    window.open(f, "_blank");
+  }
 }
 
 async function _comprimirImagenDNI(file) {
@@ -4678,7 +4722,7 @@ async function _comprimirImagenDNI(file) {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const maxLado = 1000;
+        const maxLado = 1200; // Aumentado para mejor calidad de documentos
         let w = img.width, h = img.height;
         if (w > maxLado || h > maxLado) {
           if (w > h) { h = Math.round(h * maxLado / w); w = maxLado; }
@@ -4688,7 +4732,7 @@ async function _comprimirImagenDNI(file) {
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", 0.75));
+        resolve(canvas.toDataURL("image/jpeg", 0.78));
       };
       img.onerror = reject;
       img.src = e.target.result;
@@ -4698,14 +4742,26 @@ async function _comprimirImagenDNI(file) {
   });
 }
 
-// Funciones para que el guardado de cada formulario incluya la foto del DNI
+// Funciones para que el guardado de cada formulario incluya las fotos
 function obtenerFotoDNI(contexto) {
-  return _fotosDNI[contexto] || null;
+  // Compatibilidad: devuelve array siempre
+  if (Array.isArray(_fotosDNI[contexto])) return _fotosDNI[contexto].slice();
+  return [];
 }
 function limpiarFotoDNI(contexto) {
-  _fotosDNI[contexto] = null;
+  _fotosDNI[contexto] = [];
   const prev = document.getElementById(`dniFotoPreview${contexto.charAt(0).toUpperCase() + contexto.slice(1)}`);
-  if (prev) prev.style.display = "none";
+  if (prev) { prev.style.display = "none"; prev.innerHTML = ""; }
+}
+
+// Cargar fotos existentes al editar una ficha
+function cargarFotosDNIExistentes(contexto, fotosArray) {
+  if (!Array.isArray(fotosArray)) {
+    // Compatibilidad: si era un solo string, lo convertimos a array
+    fotosArray = (typeof fotosArray === "string" && fotosArray) ? [fotosArray] : [];
+  }
+  _fotosDNI[contexto] = fotosArray.slice();
+  _renderPreviewsFotosDNI(contexto);
 }
 
 window.abrirEscaneoDNI = abrirEscaneoDNI;
@@ -4715,6 +4771,8 @@ window.guardarFotoDNI = guardarFotoDNI;
 window.quitarFotoDNI = quitarFotoDNI;
 window.obtenerFotoDNI = obtenerFotoDNI;
 window.limpiarFotoDNI = limpiarFotoDNI;
+window.cargarFotosDNIExistentes = cargarFotosDNIExistentes;
+window._verFotoGrande = _verFotoGrande;
 
 // ============================================================
 // v8.5.1 — Cálculo automático de edad desde fecha de nacimiento
@@ -4760,8 +4818,8 @@ function _conectarAutoEdad(idFecha, idEdad, idLabel) {
 
 // Setup en los 3 formularios
 setTimeout(() => {
-  // Personas: tiene pNacimiento, vamos a mostrar edad calculada cerca del campo
-  _conectarAutoEdad("pNacimiento", "pEdadAuto", "pEdadDisplay");
+  // Personas: tiene pNacimiento + pEdad (campo manual editable)
+  _conectarAutoEdad("pNacimiento", "pEdad", "pEdadDisplay");
   // Denuncias: tiene dnNacimiento + dnEdad
   _conectarAutoEdad("dnNacimiento", "dnEdad");
   // Exposiciones: tiene enNacimiento + enEdad
@@ -6727,12 +6785,14 @@ function quitarFoto() {
 
 /* === CRUD Personas === */
 function leerFormularioPersona() {
+  const fotosDNI = (typeof obtenerFotoDNI === "function") ? obtenerFotoDNI("persona") : [];
   return {
     tipo: moduloActivo,
     nombre: document.getElementById("pNombre").value.trim(),
     sexo: document.getElementById("pSexo").value,
     nacionalidad: document.getElementById("pNacionalidad").value.trim(),
     nacimiento: document.getElementById("pNacimiento").value,
+    edad: document.getElementById("pEdad") ? document.getElementById("pEdad").value.trim() : "",
     dni: document.getElementById("pDni").value.trim(),
     lugarNac: document.getElementById("pLugarNac").value.trim(),
     domicilio: document.getElementById("pDomicilio").value.trim(),
@@ -6741,13 +6801,14 @@ function leerFormularioPersona() {
     hora: document.getElementById("pHora").value || horaActual(),
     motivo: document.getElementById("pMotivo").value.trim(),
     observaciones: document.getElementById("pObservaciones").value.trim(),
-    fotoDNI: (typeof obtenerFotoDNI === "function") ? obtenerFotoDNI("persona") : null  // v8.5.0
+    fotosDNI: Array.isArray(fotosDNI) ? fotosDNI : (fotosDNI ? [fotosDNI] : []),  // v8.5.5: array de fotos
+    fotoDNI: Array.isArray(fotosDNI) && fotosDNI.length > 0 ? fotosDNI[0] : (fotosDNI || null) // compatibilidad
   };
 }
 
 function limpiarFormularioPersona() {
-  ["pNombre","pNacionalidad","pNacimiento","pDni","pLugarNac","pDomicilio","pMotivo","pObservaciones"].forEach(id => {
-    document.getElementById(id).value = "";
+  ["pNombre","pNacionalidad","pNacimiento","pEdad","pDni","pLugarNac","pDomicilio","pMotivo","pObservaciones"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = "";
   });
   document.getElementById("pNacionalidad").value = "Argentina";
   document.getElementById("pSexo").value = "Masculino";
@@ -6759,6 +6820,8 @@ function limpiarFormularioPersona() {
   document.getElementById("btnCancelarEdicion").style.display = "none";
   quitarFoto();
   if (typeof limpiarFotoDNI === "function") limpiarFotoDNI("persona");  // v8.5.0
+  const disp = document.getElementById("pEdadDisplay");
+  if (disp) disp.innerText = "";
 }
 
 async function guardarPersona() {
@@ -6805,17 +6868,32 @@ async function editarPersona(id) {
   document.getElementById("pSexo").value = p.sexo || "Masculino";
   document.getElementById("pNacionalidad").value = p.nacionalidad || "";
   document.getElementById("pNacimiento").value = p.nacimiento || "";
+  if (document.getElementById("pEdad")) {
+    document.getElementById("pEdad").value = p.edad || "";
+  }
   document.getElementById("pDni").value = p.dni || "";
   document.getElementById("pLugarNac").value = p.lugarNac || "";
   document.getElementById("pDomicilio").value = p.domicilio || "";
   document.getElementById("pEstado").value = p.estado || "ISA";
   document.getElementById("pFecha").value = p.fecha || hoy();
-  document.getElementById("pHora").value = p.hora || horaActual();
+  document.getElementById("pHora").value = horaActual();
   document.getElementById("pMotivo").value = p.motivo || "";
   document.getElementById("pObservaciones").value = p.observaciones || "";
   document.getElementById("pEditandoId").value = String(id);
   document.getElementById("btnGuardarPersona").innerText = "Actualizar ficha";
   document.getElementById("btnCancelarEdicion").style.display = "block";
+
+  // v8.5.5: Cargar fotos del DNI existentes
+  if (typeof cargarFotosDNIExistentes === "function") {
+    let fotosDNI = [];
+    if (Array.isArray(p.fotosDNI) && p.fotosDNI.length > 0) {
+      fotosDNI = p.fotosDNI;
+    } else if (p.fotoDNI) {
+      // Compatibilidad con fichas viejas que tenían 1 sola foto
+      fotosDNI = [p.fotoDNI];
+    }
+    cargarFotosDNIExistentes("persona", fotosDNI);
+  }
 
   // mostrar foto existente como pendiente para preview, pero no marcarla para regrabar
   if (fotosCache[id]) {
@@ -7007,7 +7085,12 @@ function escapeHtml(s) {
     .replace(/'/g, "&#039;");
 }
 
-function calcularEdad(nacimientoISO) {
+function calcularEdad(nacimientoISO, edadManual) {
+  // Si hay edad manual cargada, usar esa
+  if (edadManual !== undefined && edadManual !== null && edadManual !== "") {
+    const e = parseInt(edadManual, 10);
+    if (!isNaN(e) && e >= 0 && e < 130) return `${e} años`;
+  }
   if (!nacimientoISO) return "—";
   const d = new Date(nacimientoISO);
   if (isNaN(d.getTime())) return "—";
@@ -7036,7 +7119,17 @@ function renderDetallePersona() {
     return;
   }
   const foto = fotosCache[p.id];
+
+  // v8.5.5: Reunir fotos de DNI/documentos (compatibilidad con array y string)
+  let fotosDocs = [];
+  if (Array.isArray(p.fotosDNI) && p.fotosDNI.length > 0) {
+    fotosDocs = p.fotosDNI;
+  } else if (p.fotoDNI) {
+    fotosDocs = [p.fotoDNI];
+  }
+
   cont.innerHTML = `
+    <!-- 1. FOTO DEL ROSTRO arriba (primero) -->
     <div class="foto-grande">
       ${foto ? `<img src="${foto}" alt="Foto del rostro">` : '<span class="sin-foto">Sin foto cargada</span>'}
     </div>
@@ -7047,8 +7140,9 @@ function renderDetallePersona() {
     </div>
 
     <h3 style="margin:6px 0 2px;color:#dff9ff;font-size:16px;letter-spacing:.04em;">${escapeHtml(p.nombre || "Sin nombre")}</h3>
-    <span class="small">DNI: ${escapeHtml(p.dni || "—")} · ${calcularEdad(p.nacimiento)}</span>
+    <span class="small">DNI: ${escapeHtml(p.dni || "—")} · ${calcularEdad(p.nacimiento, p.edad)}</span>
 
+    <!-- 2. DATOS FILIATORIOS en el medio -->
     <div class="data-grid">
       <div class="data-cell">
         <span class="lab">Sexo</span>
@@ -7061,6 +7155,10 @@ function renderDetallePersona() {
       <div class="data-cell">
         <span class="lab">Fecha nac.</span>
         <span class="val">${escapeHtml(p.nacimiento || "—")}</span>
+      </div>
+      <div class="data-cell">
+        <span class="lab">Edad</span>
+        <span class="val">${escapeHtml(p.edad || "") || calcularEdad(p.nacimiento, p.edad)}</span>
       </div>
       <div class="data-cell">
         <span class="lab">Lugar nac.</span>
@@ -7088,6 +7186,21 @@ function renderDetallePersona() {
       </div>
     </div>
 
+    <!-- 3. FOTOS DE DOCUMENTOS abajo (al final) -->
+    ${fotosDocs.length > 0 ? `
+      <div style="margin-top:14px;padding:10px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.3);border-radius:8px">
+        <div style="font-size:11px;color:#86efac;font-weight:700;letter-spacing:.08em;margin-bottom:8px">📸 FOTOS DE DOCUMENTOS (${fotosDocs.length})</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
+          ${fotosDocs.map((f, i) => `
+            <div style="position:relative;border:1px solid rgba(34,197,94,.3);border-radius:6px;overflow:hidden;background:#000;cursor:pointer" onclick="abrirLightbox && abrirLightbox('${f}')">
+              <img src="${f}" style="width:100%;height:110px;object-fit:cover;display:block" />
+              <span style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.75);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px">#${i + 1}</span>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    ` : ""}
+
     <div class="estado-editor">
       <label>Cambiar estado registral</label>
       <select id="estadoReg_${p.id}">
@@ -7101,7 +7214,6 @@ function renderDetallePersona() {
     <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
       <button class="btn-secondary" style="flex:1" onclick="editarPersona(&quot;${p.id}&quot;)">✏️ Editar datos</button>
     </div>
-    <!-- v8.5.3: Botones de exportar y compartir -->
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
       <button class="btn-secondary" style="flex:1;border-color:rgba(244,114,182,.5);color:#fbcfe8" onclick="exportarPersonaPDF(&quot;${p.id}&quot;)">📄 Descargar PDF</button>
       <button class="btn-secondary" style="flex:1;border-color:rgba(34,197,94,.5);color:#86efac" onclick="compartirPersona(&quot;${p.id}&quot;)">📤 Compartir</button>
@@ -7248,17 +7360,30 @@ async function _generarPDFPersona(p) {
     y += 65;
   }
 
-  // === Foto del DNI (si hay) ===
-  if (p.fotoDNI) {
+  // === Fotos del DNI / documentos (todas) ===
+  let fotosDocs = [];
+  if (Array.isArray(p.fotosDNI) && p.fotosDNI.length > 0) {
+    fotosDocs = p.fotosDNI;
+  } else if (p.fotoDNI) {
+    fotosDocs = [p.fotoDNI];
+  }
+  if (fotosDocs.length > 0) {
     if (y > 180) { doc.addPage(); y = 20; }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.text("FOTO DEL DOCUMENTO (DNI)", 14, y);
-    y += 4;
-    try {
-      doc.addImage(p.fotoDNI, "JPEG", 14, y, 100, 70);
-    } catch(e) { console.warn("Error agregando foto DNI:", e); }
-    y += 75;
+    doc.text(`FOTOS DE DOCUMENTOS (${fotosDocs.length})`, 14, y);
+    y += 5;
+    fotosDocs.forEach((fdoc, idx) => {
+      if (y > 210) { doc.addPage(); y = 20; }
+      try {
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(9);
+        doc.text(`Documento #${idx + 1}`, 14, y);
+        y += 3;
+        doc.addImage(fdoc, "JPEG", 14, y, 100, 65);
+        y += 70;
+      } catch(e) { console.warn("Error agregando foto DNI:", e); }
+    });
   }
 
   // === Pie de página ===
@@ -7383,17 +7508,17 @@ let _seleccionMasiva = new Set(); // ids de personas seleccionadas
 
 function abrirExportacionMasiva() {
   _seleccionMasiva = new Set();
-  // Por defecto seleccionar todas las del módulo activo
+  // Por defecto: marcar TODAS las casillas de módulo (todos visibles)
+  ["Demorado", "Detenido", "Contraventor", "Identificado"].forEach(t => {
+    const cb = document.getElementById("filtroExp" + t);
+    if (cb) cb.checked = true;
+  });
+  // Por defecto seleccionar todas las fichas del módulo activo (donde está parado)
   if (Array.isArray(personasCache)) {
     personasCache.forEach(p => {
       if (p.tipo === moduloActivo) _seleccionMasiva.add(p.id);
     });
   }
-  // Por defecto solo el módulo activo está marcado en filtros
-  ["Demorado", "Detenido", "Contraventor", "Identificado"].forEach(t => {
-    const cb = document.getElementById("filtroExp" + t);
-    if (cb) cb.checked = (t.toLowerCase() === moduloActivo);
-  });
   document.getElementById("modalExportMasivo").classList.add("active");
   _renderListaExportMasiva();
 }
@@ -7404,10 +7529,10 @@ function cerrarExportacionMasiva() {
 
 function _modulosFiltradosMasiva() {
   const tipos = [];
-  if (document.getElementById("filtroExpDemorado") && document.getElementById("filtroExpDemorado").checked) tipos.push("demorado");
-  if (document.getElementById("filtroExpDetenido") && document.getElementById("filtroExpDetenido").checked) tipos.push("detenido");
-  if (document.getElementById("filtroExpContraventor") && document.getElementById("filtroExpContraventor").checked) tipos.push("contraventor");
-  if (document.getElementById("filtroExpIdentificado") && document.getElementById("filtroExpIdentificado").checked) tipos.push("identificado");
+  if (document.getElementById("filtroExpDemorado") && document.getElementById("filtroExpDemorado").checked) tipos.push("demorados");
+  if (document.getElementById("filtroExpDetenido") && document.getElementById("filtroExpDetenido").checked) tipos.push("detenidos");
+  if (document.getElementById("filtroExpContraventor") && document.getElementById("filtroExpContraventor").checked) tipos.push("contraventores");
+  if (document.getElementById("filtroExpIdentificado") && document.getElementById("filtroExpIdentificado").checked) tipos.push("identificados");
   return tipos;
 }
 
@@ -7428,19 +7553,31 @@ function _renderListaExportMasiva() {
     const tipoLabel = (typeof TIPO_LABEL !== "undefined" && TIPO_LABEL[p.tipo]) || p.tipo;
     const tipoIcono = (typeof TIPO_ICON !== "undefined" && TIPO_ICON[p.tipo]) || "👤";
     return `
-      <label style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;cursor:pointer;background:rgba(8,47,73,.3);margin-bottom:4px">
-        <input type="checkbox" data-pid="${p.id}" ${checked} onchange="_togglePersonaMasiva('${p.id}', this.checked)" style="width:16px;height:16px"/>
-        <div style="flex:1;font-size:12.5px">
-          <div style="display:flex;align-items:center;gap:6px">
+      <div class="export-item-row" style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;cursor:pointer;background:rgba(8,47,73,.3);margin-bottom:4px" onclick="_clickFilaExport(event, '${p.id}')">
+        <input type="checkbox" data-pid="${p.id}" ${checked} onclick="event.stopPropagation()" onchange="_togglePersonaMasiva('${p.id}', this.checked)" style="width:18px;height:18px;cursor:pointer;flex-shrink:0"/>
+        <div style="flex:1;font-size:12.5px;pointer-events:none">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             <strong style="color:#dff9ff">${escapeHtml(p.nombre || "Sin nombre")}</strong>
             <span class="modulo-chip modulo-${p.tipo}" style="font-size:9px">${tipoIcono} ${tipoLabel.toUpperCase()}</span>
           </div>
           <div style="color:#94a3b8;font-size:11px">DNI ${escapeHtml(p.dni || "—")} · ${escapeHtml(p.fecha || "")} ${escapeHtml(p.hora || "")}</div>
         </div>
-      </label>`;
+      </div>`;
   }).join("");
   _actualizarResumenMasiva();
 }
+
+// v8.5.5: Click en la fila también marca/desmarca el checkbox
+function _clickFilaExport(ev, id) {
+  // Si el click vino del checkbox, no hacer nada (el onchange se encarga)
+  if (ev.target && ev.target.tagName === "INPUT") return;
+  const cb = ev.currentTarget.querySelector('input[type="checkbox"]');
+  if (cb) {
+    cb.checked = !cb.checked;
+    _togglePersonaMasiva(id, cb.checked);
+  }
+}
+window._clickFilaExport = _clickFilaExport;
 
 function _togglePersonaMasiva(id, marcada) {
   if (marcada) _seleccionMasiva.add(id);
@@ -7706,33 +7843,38 @@ async function _renderHojaFichaDetallada(doc, p) {
     y += 4 + obsTxt.length * 4.5 + 3;
   }
 
-  // Fotos lado a lado si entran
+  // Fotos: rostro + todas las del DNI/documentos
   const foto = (typeof fotosCache !== "undefined" && fotosCache) ? fotosCache[p.id] : null;
-  if (foto || p.fotoDNI) {
+  let fotosDocsHoja = [];
+  if (Array.isArray(p.fotosDNI) && p.fotosDNI.length > 0) fotosDocsHoja = p.fotosDNI;
+  else if (p.fotoDNI) fotosDocsHoja = [p.fotoDNI];
+
+  if (foto || fotosDocsHoja.length > 0) {
     if (y > 200) { doc.addPage(); y = 20; }
     doc.setFont("helvetica", "bold");
     doc.text("FOTOGRAFÍAS", 14, y);
     y += 4;
     doc.line(14, y - 1, ancho - 14, y - 1);
     y += 3;
-    let xActual = 14;
     if (foto) {
       try {
         doc.setFontSize(8);
         doc.setFont("helvetica", "italic");
-        doc.text("Rostro", xActual, y);
-        doc.addImage(foto, "JPEG", xActual, y + 2, 45, 55);
+        doc.text("Rostro", 14, y);
+        doc.addImage(foto, "JPEG", 14, y + 2, 45, 55);
       } catch(e) {}
-      xActual += 50;
+      y += 60;
     }
-    if (p.fotoDNI) {
+    fotosDocsHoja.forEach((fdoc, idx) => {
+      if (y > 220) { doc.addPage(); y = 20; }
       try {
         doc.setFontSize(8);
         doc.setFont("helvetica", "italic");
-        doc.text("Documento (DNI)", xActual, y);
-        doc.addImage(p.fotoDNI, "JPEG", xActual, y + 2, 90, 55);
+        doc.text(`Documento #${idx + 1}`, 14, y);
+        doc.addImage(fdoc, "JPEG", 14, y + 2, 100, 60);
+        y += 65;
       } catch(e) {}
-    }
+    });
   }
 }
 
@@ -8230,6 +8372,113 @@ window.exportarDenunciaPDF = exportarDenunciaPDF;
 window.compartirDenuncia = compartirDenuncia;
 window.exportarExposicionPDF = exportarExposicionPDF;
 window.compartirExposicion = compartirExposicion;
+
+// ============================================================
+// v8.5.5 — Exportar PDF de Personas (mes actual / completo)
+// ============================================================
+async function _generarPDFPersonasGrupo(personas, titulo) {
+  const lib = await _cargarJSPDF();
+  const { jsPDF } = lib;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const ancho = doc.internal.pageSize.getWidth();
+  const alto = doc.internal.pageSize.getHeight();
+
+  // Portada
+  doc.setFillColor(8, 47, 73);
+  doc.rect(0, 0, ancho, 50, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.text("POLICÍA DEL NEUQUÉN", ancho / 2, 18, { align: "center" });
+  doc.setFontSize(12);
+  doc.text("COMISARÍA N° 47 — VILLA PEHUENIA", ancho / 2, 27, { align: "center" });
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text(titulo.toUpperCase(), ancho / 2, 44, { align: "center" });
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Fecha de emisión: ${new Date().toLocaleString("es-AR")}`, ancho / 2, 60, { align: "center" });
+  doc.text(`Total de fichas: ${personas.length}`, ancho / 2, 66, { align: "center" });
+
+  // Resumen por módulo
+  const conteo = {};
+  personas.forEach(p => { conteo[p.tipo] = (conteo[p.tipo] || 0) + 1; });
+  let yResumen = 76;
+  doc.setFont("helvetica", "bold");
+  doc.text("RESUMEN POR MÓDULO", ancho / 2, yResumen, { align: "center" });
+  yResumen += 6;
+  doc.setFont("helvetica", "normal");
+  Object.entries(conteo).forEach(([tipo, n]) => {
+    const tipoLabel = (typeof TIPO_LABEL !== "undefined" && TIPO_LABEL[tipo]) || tipo;
+    doc.text(`${tipoLabel}: ${n}`, ancho / 2, yResumen, { align: "center" });
+    yResumen += 5;
+  });
+
+  // Una hoja por ficha (formato detallado)
+  for (const p of personas) {
+    await _renderHojaFichaDetallada(doc, p);
+  }
+
+  // Pie en todas
+  const totalPag = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPag; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Sistema "Mapa del Delito" — Comisaría N° 47 — ${new Date().toLocaleString("es-AR")}`, ancho / 2, alto - 7, { align: "center" });
+    doc.text(`Página ${i} de ${totalPag}`, ancho - 14, alto - 7, { align: "right" });
+  }
+
+  return doc;
+}
+
+async function exportarPersonasPDFMesActual() {
+  const ahora = new Date();
+  const yyyy = ahora.getFullYear();
+  const mm = String(ahora.getMonth() + 1).padStart(2, "0");
+  const prefijo = `${yyyy}-${mm}`;
+  const fichas = (personasCache || []).filter(p => (p.fecha || "").startsWith(prefijo));
+
+  if (fichas.length === 0) {
+    alert(`No hay fichas cargadas en el mes actual (${mm}/${yyyy}).`);
+    return;
+  }
+
+  try {
+    const doc = await _generarPDFPersonasGrupo(fichas, `FICHAS DEL MES ${mm}/${yyyy}`);
+    const nombre = `Fichas_Personas_${yyyy}-${mm}.pdf`;
+    doc.save(nombre);
+  } catch(e) {
+    console.error(e);
+    alert("Error al generar PDF: " + (e.message || e));
+  }
+}
+
+async function exportarPersonasPDFTodos() {
+  const fichas = personasCache || [];
+  if (fichas.length === 0) {
+    alert("No hay fichas cargadas en el sistema.");
+    return;
+  }
+
+  if (fichas.length > 100) {
+    if (!confirm(`Vas a generar un PDF con ${fichas.length} fichas. Esto puede tardar varios segundos. ¿Continuar?`)) return;
+  }
+
+  try {
+    const doc = await _generarPDFPersonasGrupo(fichas, "FICHAS DE PERSONAS — BASE COMPLETA");
+    const nombre = `Fichas_Personas_Completo_${new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(nombre);
+  } catch(e) {
+    console.error(e);
+    alert("Error al generar PDF: " + (e.message || e));
+  }
+}
+
+window.exportarPersonasPDFMesActual = exportarPersonasPDFMesActual;
+window.exportarPersonasPDFTodos = exportarPersonasPDFTodos;
 
 function renderPersonas() {
   actualizarContadoresPersonas();
